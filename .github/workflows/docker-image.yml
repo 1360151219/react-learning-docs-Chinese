@@ -59,6 +59,9 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
+            docker stop $(docker ps --filter ancestor=registry.cn-beijing.aliyuncs.com/strk2/react-docs -q)
+            docker rm -f $(docker ps -a --filter ancestor=registry.cn-beijing.aliyuncs.com/strk2/react-docs:latest -q)
+            docker rmi -f $(docker images registry.cn-beijing.aliyuncs.com/strk2/react-docs:latest -q)
             docker login --username=盐焗乳鸽还要香锅 --password=${{ secrets.PASSWORD }} registry.cn-beijing.aliyuncs.com
             docker pull registry.cn-beijing.aliyuncs.com/strk2/react-docs
-            docker run -dt -p 8081:80 registry.cn-beijing.aliyuncs.com/strk2/react-docs
+            docker run -dt -p 8081:80 registry.cn-beijing.aliyuncs.com/strk2/react-docs --name react-tutorial
