@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="description" content="Description" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0"
+    />
+    <link
+      rel="stylesheet"
+      href="//cdn.jsdelivr.net/npm/docsify/themes/buble.css"
+    />
+    <style>
+      * {
+        font-family: Century Gothic !important;
+      }
+      em {
+        color: #238e23 !important;
+      }
+      .token.atrule,
+      .token.attr-value,
+      .token.keyword {
+        color: #ff7190;
+      }
+      pre code {
+        background-color: inherit !important;
+      }
+      pre {
+        color: rgb(248, 248, 242) !important;
+        background-color: rgb(39, 40, 34) !important;
+        border-radius: 10px;
+      }
+      code {
+        background-color: #dadde1;
+        border-radius: 0.2rem;
+        border: 0.1rem solid rgba(0, 0, 0, 0.1);
+      }
+
+      .token.punctuation {
+        color: rgb(248, 248, 242);
+      }
+      .markdown-section blockquote {
+        padding: 5px;
+        background-color: #9f80d02b;
+        border-left-color: #5e3b96;
+      }
+      .markdown-section blockquote > *,
+      .markdown-section blockquote p {
+        margin: 0;
+        font-weight: normal !important;
+        color: #000;
+      }
+    </style>
+    <style>
+      .sidebar li.active {
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+      }
+      .sidebar li.active a {
+        color: #764abc;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      window.$docsify = {
+        name: "",
+        repo: "",
+        loadNavbar: false,
+        loadSidebar: true,
+        subMaxLevel: 3,
+        //全文搜索
+        search: {
+          //maxAge: 86400000, // 过期时间，单位毫秒，默认一天
+          paths: "auto",
+          placeholder: "搜索",
+          noData: "找不到结果",
+          // 搜索标题的最大程级, 1 - 6
+          depth: 6,
+        },
+        sidebarDisplayLevel: 2, // set sidebar display level
+      };
+    </script>
+    <!-- Docsify v4 -->
+    <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  </body>
+</html>

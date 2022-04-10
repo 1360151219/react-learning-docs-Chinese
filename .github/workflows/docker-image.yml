@@ -1,0 +1,67 @@
+name: Docker Image CI
+env:
+  AZURE_WEBAPP_NAME: blog # set this to your application's name
+  AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: "10.x"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Login to registry
+        uses: docker/login-action@v1
+        with:
+          registry: registry.cn-beijing.aliyuncs.com
+          username: 盐焗乳鸽还要香锅
+          password: ${{ secrets.PASSWORD }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: registry.cn-beijing.aliyuncs.com/strk2/react-docs:latest
+#       - name: Image digest
+#         run: echo ${{ steps.docker_build.outputs.digest }}
+#       - name: deploy to cluster
+#         uses: steebchen/kubectl@v2.0.0
+#         with: # defaults to latest kubectl binary version
+#           config: ${{ secrets.KUBE_CONFIG_DATA }}
+#           command: get deployment && kubectl rollout restart deployment/blog-deploy
+#       - name: verify deployment
+#         uses: steebchen/kubectl@v2.0.0
+#         with:
+#           config: ${{ secrets.KUBE_CONFIG_DATA }}
+#           version: v1.21.0 # specify kubectl binary version explicitly
+#           command: rollout status deployment/blog-deploy
+  pull-docker:
+    needs: [build]
+    name: Pull Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            docker stop $(docker ps --filter ancestor=registry.cn-beijing.aliyuncs.com/strk2/react-docs -q)
+            docker rm -f $(docker ps -a --filter ancestor=registry.cn-beijing.aliyuncs.com/strk2/react-docs:latest -q)
+            docker rmi -f $(docker images registry.cn-beijing.aliyuncs.com/strk2/react-docs:latest -q)
+            docker login --username=盐焗乳鸽还要香锅 --password=${{ secrets.PASSWORD }} registry.cn-beijing.aliyuncs.com
+            docker pull registry.cn-beijing.aliyuncs.com/strk2/react-docs
+            docker run -dt -p 8081:80 registry.cn-beijing.aliyuncs.com/strk2/react-docs --name react-tutorial
