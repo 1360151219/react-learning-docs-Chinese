@@ -4,11 +4,11 @@
  * @Description: 文件描述
 -->
 
-- [前言](/README.md)
+- [前言](README.md)
 - React Router v6
-  - [基本教程](./React/ReactRouterV6.md)
+  - [基本教程](React/ReactRouterV6.md)
 - React TypeScipt Execrise
-  - [typescipt cheatSheet](./React/ReactTypescript-cheatSheet.md)
+  - [typescipt cheatSheet](React/ReactTypescript-cheatSheet.md)
 - Redux Learning
-  - [Redux](./Redux/Redux.md)
-  - [Redux Tutorials](./Redux/Redux-Tutorials.md)
+  - [Redux](Redux/Redux.md)
+  - [Redux Tutorials](Redux/Redux-Tutorials.md)
