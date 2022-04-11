@@ -176,7 +176,7 @@ export default function Invoices() {
 
 这里的`path`被赋予了`*`，表示当没有其他路由匹配的时候，就匹配这个。**与顺序无关**
 
-### Read URL Params 读取 URL 参数
+### Read URL Params 读取 URL 参数 `useParmas`
 
 我们刚刚匹配到了 `"/invoices/1998"` and `"/invoices/2005"`, 我们现在想要在具体的组件中去获取这个 url 的参数。比如：
 
@@ -260,7 +260,9 @@ Index Router 很可能是最难让人们去理解的一个概念了。所以如�
 </Route>
 ```
 
-你应该注意到索引路由是没有`path`属性的。
+你应该注意到索引路由是**没有`path`属性**的。
+
+> 再注意一点，索引路由也没有`children`属性，即没有子路由
 
 可以你仍然还抓破头脑没弄清楚，这里有一些我们尝试回答'索引路由是什么的'这个问题的答案，希望有一些能帮到你：
 
@@ -309,7 +311,7 @@ Index Router 很可能是最难让人们去理解的一个概念了。所以如�
 <NavLink className={({ isActive }) => isActive ? "red" : "blue"} />
 ```
 
-### 查询字符串参数
+### 查询字符串参数 `useSearchParams`
 
 查询字符串跟 url 参数并不相同。你肯定在一些网站上看过比如`"/login?success=1" or "/shoes?brand=nike&sort=asc&sortby=price"`
 
