@@ -151,7 +151,7 @@ export function Counter() {
 - 然后经过 Reducer，根据 actions type 来执行对应的更新 State 操作
 - 最后 React 组件可以从 Store 得到最新的 State 并且重新渲染组件
 
-## 你学到了什么
+### 你学到了什么
 
 That was a brief overview of how to set up and use Redux Toolkit with React. Recapping the details:
 
@@ -172,7 +172,7 @@ That was a brief overview of how to set up and use Redux Toolkit with React. Rec
 >   - Read data from the store with the `useSelector` hook
 >   - Get the dispatch function with the `useDispatch` hook, and dispatch actions as needed
 
-## 一个完整的计数 App 例子
+### 一个完整的计数 App 例子
 
 感兴趣的同学可以直接去 [官方文档](https://redux.js.org/tutorials/quick-start) 查看，下面只截取核心代码
 
@@ -285,5 +285,124 @@ export function Counter() {
       </div>
     </div>
   );
+}
+```
+
+## Redux Toolkit TypeScript Quick Start
+
+> 想要更具体的了解细节可以关注 https://redux.js.org/usage/usage-with-typescript
+
+### 介绍
+
+本文主要关注在如何建立 TypeScript 为主的 Redux+React 应用。
+
+Redux Toolkit 是基于 TypeScript 编写的，因此 TS 类型定义也包含在其中。React Redux 也有它自身的类型定义`@types/react-redux`。在 React Redux v7.2.3 中，`@types/react-redux`会自动地和源库一起被安装下来。
+
+> The **Redux+TS template for Create-React-App** comes with a working example of these patterns already configured.
+
+---
+
+### 定义根 State 和 Dispatch 类型
+
+Redux Toolkit 的`configureStore` API 不需要用户去添加 types，但是，你可能需要去提取`RootState`和`Dispatch`的类型以便于被使用。而且从 Store 中去提取这些类型，有利于在用户添加更多的中间件或者状态切片的时候能够正确的更新。
+
+```ts
+import { configureStore } from "@reduxjs/toolkit";
+// ...
+
+const store = configureStore({
+  reducer: {
+    posts: postsReducer,
+    comments: commentsReducer,
+    users: usersReducer,
+  },
+});
+// Infer the `RootState` and `AppDispatch` types from the store itself
+export type RootState = ReturnType<typeof store.getState>;
+// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
+export type AppDispatch = typeof store.dispatch;
+```
+
+> 从这里也可以看出，`store.getState` API 是一个函数返回一个 State；
+
+### 定义 Hooks 的类型
+
+现在我们可以引用`RootState`和`AppDispatch` types 到每一个组件中去了，这可以更好的去创建类型化的`useDispatch`和`useSelector` hooks。下面是这样做的一些原因：
+
+- 对于`useSelector`，它节省了你每次都要规定`(state: RootState)`的时间。
+- 对于`useDispatch`，默认的`Dispatch`类型没有定义 thunks。为了去正确的 dispatch thunks，你需要使用特殊指定的`AppDispatch`类型，因为它包含了 thunk 中间件类型。因此一个被预先定义了类型的`useDispacth`hooks 使得你不需要再去引用`AppDispatch`了。
+
+```js
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import type { RootState, AppDispatch } from './store'
+
+// Use throughout your app instead of plain `useDispatch` and `useSelector`
+export const useAppDispatch = () => useDispatch<AppDispatch>()
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+```
+
+### 定义状态切片和 Action 的类型
+
+每一个切片文件都应该去为它的初始 state 定义类型，这样`createSlice`才可以正确的推论出每一个 reducer 的 state 的类型
+
+所有生成的 Actions 都应该使用 Redux Toolkit 中的`PayloadAction<T>`来定义类型。`PayloadAction<T>`可以对`action.payload`字段定义通用的类型参数
+
+```ts
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from "../../app/store";
+
+// Define a type for the slice state
+interface CounterState {
+  value: number;
+}
+
+// Define the initial state using that type
+const initialState: CounterState = {
+  value: 0,
+};
+
+export const counterSlice = createSlice({
+  name: "counter",
+  // `createSlice` will infer the state type from the `initialState` argument
+  initialState,
+  reducers: {
+    increment: (state) => {
+      state.value += 1;
+    },
+    decrement: (state) => {
+      state.value -= 1;
+    },
+    // Use the PayloadAction type to declare the contents of `action.payload`
+    incrementByAmount: (state, action: PayloadAction<number>) => {
+      state.value += action.payload;
+    },
+  },
+});
+
+export const { increment, decrement, incrementByAmount } = counterSlice.actions;
+
+// Other code such as selectors can use the imported `RootState` type
+export const selectCount = (state: RootState) => state.counter.value;
+
+export default counterSlice.reducer;
+```
+
+这里自动生成的 action creators 将会正确的将参数`payload`规定类型。
+
+### 使用你的 Typed Hooks 吧
+
+```tsx
+import React from "react";
+
+import { useAppSelector, useAppDispatch } from "app/hooks";
+
+import { decrement, increment } from "./counterSlice";
+
+export function Counter() {
+  // The `state` arg is correctly typed as `RootState` already
+  const count = useAppSelector((state) => state.counter.value);
+  const dispatch = useAppDispatch();
+
+  // omit rendering logic
 }
 ```
