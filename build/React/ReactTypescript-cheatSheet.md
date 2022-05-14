@@ -281,3 +281,199 @@ class Comp extends React.PureComponent<Props, State> {
   }
 }
 ```
+
+## Hooks
+
+### useState
+
+对于一些简单的 value 来说，类型推断是能非常好的帮助到我们。
+
+```js
+const [val, toggle] = React.useState(false);
+// `val` is inferred to be a boolean
+// `toggle` only takes booleans
+```
+
+如果你想要依靠类型推断去使用比较复杂的类型，可以查看[使用类型推断](https://react-typescript-cheatsheet.netlify.app/docs/basic/troubleshooting/types/#using-inferred-types)章节
+
+然而，很多 hooks 通常会被初始化一个空，你想知道如何去提供一个类型，就去明确声明类型，使用**联合类型**。
+
+```ts
+const [user, setUser] = React.useState<IUser | null>(null);
+
+// later...
+setUser(newUser);
+```
+
+你也可以使用类型断言。
+
+```ts
+const [user, setUser] = React.useState<IUser>({} as IUser);
+
+// later...
+setUser(newUser);
+```
+
+你应该在后面的代码中去为`user`设置 state，如果你不这样做，会引起运行时类型报错。
+
+### useReducer
+
+使用 typescript 来为 reducer 声明类型：
+
+```ts
+const initialState = { count: 0 };
+
+type ACTIONTYPE =
+  | { type: "increment"; payload: number }
+  | { type: "decrement"; payload: string };
+
+function reducer(state: typeof initialState, action: ACTIONTYPE) {
+  switch (action.type) {
+    case "increment":
+      return { count: state.count + action.payload };
+    case "decrement":
+      return { count: state.count - Number(action.payload) };
+    default:
+      throw new Error();
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = React.useReducer(reducer, initialState);
+  return (
+    <>
+      Count: {state.count}
+      <button onClick={() => dispatch({ type: "decrement", payload: "5" })}>
+        -
+      </button>
+      <button onClick={() => dispatch({ type: "increment", payload: 5 })}>
+        +
+      </button>
+    </>
+  );
+}
+```
+
+> 如果你使用`redux`,则有：redux 提供了一个方便的泛型`Reducer<State, Action>`
+>
+> ```ts
+> import { Reducer } from 'redux';
+>
+> export function reducer: Reducer<AppState, Action>() {}
+>
+> ```
+
+### useEffect / useLayoutEffect
+
+这两者都会返回一个具有清理副作用功能的函数，这个函数如果没有返回值，根本就不需要类型。因此我们在使用的时候注意不要返回任何函数或者 undefined，我们看一下下面的一个例子：
+
+```ts
+function DelayedEffect(props: { timerMs: number }) {
+  const { timerMs } = props;
+
+  useEffect(
+    () =>
+      setTimeout(() => {
+        /* do stuff */
+      }, timerMs),
+    [timerMs]
+  );
+  // bad example! setTimeout implicitly returns a number
+  // because the arrow function body isn't wrapped in curly braces
+  // 这里useEffect中返回了一个number，不符合
+  return null;
+}
+```
+
+### useRef
+
+`useRef`返回一个要么只读要么可变的引用类型对象，这取决于你的类型参数是否完全覆盖住了初始值。
+
+- **DOM Element Ref**
+
+在需要使用`useRef`去获取 DOM 的引用的时候，我们通常给其初始值附上`null`，这种情况下就是只读的`.current`。我们需要给其声明类型：
+
+```ts
+function Foo() {
+  // - If possible, prefer as specific as possible. For example, HTMLDivElement
+  //   is better than HTMLElement and way better than Element.
+  // - Technical-wise, this returns RefObject<HTMLDivElement>
+  const divRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Note that ref.current may be null. This is expected, because you may
+    // conditionally render the ref-ed element, or you may forgot to assign it
+    if (!divRef.current) throw Error("divRef is not assigned");
+
+    // Now divRef.current is sure to be HTMLDivElement
+    doSomethingWith(divRef.current);
+  });
+
+  // Give the ref to an element so React can manage it for you
+  return <div ref={divRef}>etc</div>;
+}
+```
+
+如果你能确保`divRef.current`不会为 null，那你可以使用非空断言符号`!`
+
+```ts
+const divRef = useRef<HTMLDivElement>(null!);
+// Later... No need to check if it is null
+doSomethingWith(divRef.current);
+```
+
+但你如果没有将它与 Element 绑定起来，则报错。
+
+- **Mutable value ref**
+
+你也可以使用`useRef`来保存一个不会影响组件重新渲染的值。
+
+```ts
+function Foo() {
+  // Technical-wise, this returns MutableRefObject<number | null>
+  const intervalRef = useRef<number | null>(null);
+
+  // You manage the ref yourself (that's why it's called MutableRefObject!)
+  useEffect(() => {
+    intervalRef.current = setInterval(...);
+    return () => clearInterval(intervalRef.current);
+  }, []);
+
+  // The ref is not passed to any element's "ref" prop
+  return <button onClick={/* clearInterval the ref */}>Cancel timer</button>;
+}
+```
+
+### useImperativeHandle
+
+> 这边资料太少，可以看一下[a discussion in our issues](https://github.com/typescript-cheatsheets/react/issues/106)
+
+```ts
+// 这个例子中并没有使用forwardRef
+type ListProps<ItemType> = {
+  items: ItemType[];
+  innerRef?: React.Ref<{ scrollToItem(item: ItemType): void }>;
+};
+
+function List<ItemType>(props: ListProps<ItemType>) {
+  useImperativeHandle(props.innerRef, () => ({
+    scrollToItem() {},
+  }));
+  return null;
+}
+```
+
+### Custom Hooks
+
+如果你需要自定义 Hooks，你需要避免类型推断成一个联合类型数组。这里可以使用 const assertions
+
+```ts
+export function useLoading() {
+  const [isLoading, setState] = React.useState(false);
+  const load = (aPromise: Promise<any>) => {
+    setState(true);
+    return aPromise.finally(() => setState(false));
+  };
+  return [isLoading, load] as const; // infers [boolean, typeof load] instead of (boolean | typeof load)[]
+}
+```

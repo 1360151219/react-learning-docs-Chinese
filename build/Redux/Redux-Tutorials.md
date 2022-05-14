@@ -306,7 +306,7 @@ Redux Toolkit 是基于 TypeScript 编写的，因此 TS 类型定义也包含�
 
 Redux Toolkit 的`configureStore` API 不需要用户去添加 types，但是，你可能需要去提取`RootState`和`Dispatch`的类型以便于被使用。而且从 Store 中去提取这些类型，有利于在用户添加更多的中间件或者状态切片的时候能够正确的更新。
 
-```ts
+```js
 import { configureStore } from "@reduxjs/toolkit";
 // ...
 
@@ -347,7 +347,7 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 所有生成的 Actions 都应该使用 Redux Toolkit 中的`PayloadAction<T>`来定义类型。`PayloadAction<T>`可以对`action.payload`字段定义通用的类型参数
 
-```ts
+```js
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
 
@@ -391,7 +391,7 @@ export default counterSlice.reducer;
 
 ### 使用你的 Typed Hooks 吧
 
-```tsx
+```js
 import React from "react";
 
 import { useAppSelector, useAppDispatch } from "app/hooks";
